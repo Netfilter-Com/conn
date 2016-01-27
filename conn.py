@@ -17,7 +17,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib import request
 
 
-VERSION = '1.6.0'
+VERSION = '1.6.1'
+VERBOSE = True
+
+
+def display(*args, **kw):
+    if VERBOSE:
+        print(*args, **kw)
 
 
 class ConnectError(Exception):
@@ -61,7 +67,7 @@ class ConnectionTest(object):
                 time.sleep(self.sleep)
 
                 if self.dry_run:
-                    print(url)
+                    display(url)
                     return 0
 
                 ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
@@ -79,10 +85,10 @@ class ConnectionTest(object):
                 try:
                     total += fut.result()
                 except ConnectError as ce:
-                    print(*ce.args)
+                    display(*ce.args)
                     errors.append(ce)
                 except Exception as e:
-                    print(e)
+                    display(e)
                     errors.append(e)
                 finally:
                      pass
@@ -96,14 +102,18 @@ def main():
     parser.add_argument('-p', dest='procs', default=1, type=int, help='Number of simultaneous processes to start.')
     parser.add_argument('-t', dest='threads', default=ConnectionTest.threads, type=int, help='Number of threads per process. Each thread open an URL.')
     parser.add_argument('-r', dest='repeat', default=None, type=int, help='Total number of processes to open.')
+    parser.add_argument('-q', dest='quiet', default=False, action="store_true", help="Do not print errors and URLs.")
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     parser.add_argument('--timeout', default=ConnectionTest.timeout, type=int, help='Timeout for HTTP(S) connection.')
     parser.add_argument('--sleep', default=ConnectionTest.sleep, type=float, help='Time to sleep prior to each request.')
     parser.add_argument('--shuffle', default=ConnectionTest.shuffle, action='store_true', help='Shuffle the list of URLs at the start of each process.')
-    parser.add_argument('--offset', default=ConnectionTest.base_offset, type=int, help='Offset the input list by OFFSET*k elements on each repeatition.')
-    parser.add_argument('--skip', default=0, type=int, help='Skip the first N elements on the list.')
+    parser.add_argument('--offset', default=ConnectionTest.base_offset, type=int, help='Offset the input list by OFFSET*k elements on each repetition.')
+    parser.add_argument('--skip', default=0, type=int, help='Skip the first N elements on the list. Note the list is a clycle.')
     parser.add_argument('--dry_run', default=False, action='store_true', help='Print URLs instead of opening them.')
     args = parser.parse_args()
+
+    global VERBOSE
+    VERBOSE = not args.quiet
 
     ctest = ConnectionTest(args.url, args.urlfile, args.skip)
     ctest.threads = args.threads
