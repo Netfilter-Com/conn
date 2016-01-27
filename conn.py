@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# coding: utf-8
 """
     Load testing for HTTP and HTTPS.
     Author: João Bernardo Oliveira <jboliveira@netfilter.com.br>
@@ -17,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib import request
 
 
-VERSION = '1.6.1'
+VERSION = '1.6.2'
 VERBOSE = True
 
 
@@ -44,15 +45,15 @@ class ConnectionTest(object):
         else:
             with open(url) as f:
                 self._urls = f.read().splitlines()
+        self._original_urls = self._urls
         self.set_cycle(skip)
 
     def url(self, skip=None):
         return next(self._urls_cycle)
 
-    def set_cycle(self, offset):
-        position = offset
-        position = position % len(self._urls)
-        self._urls = self._urls[position:] + self._urls[:position]
+    def set_cycle(self, position):
+        position = position % len(self._original_urls)
+        self._urls = self._original_urls[position:] + self._original_urls[:position]
         self._urls_cycle = itertools.cycle(self._urls)
 
     def connect(self, pos_offset):
