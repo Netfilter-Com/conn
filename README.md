@@ -1,5 +1,5 @@
 # Conn
-Open several connections to help HTTP/HTTPS load testing. For the list of options, try `./conn.py --help`.
+Open several connections for HTTP/HTTPS load test. For the list of options, try `./conn.py --help`.
 
 ## Examples - Single URL
 
@@ -24,7 +24,7 @@ Open several connections to help HTTP/HTTPS load testing. For the list of option
 
 * Test a single URL with 10 simultaneous threads per process (up to 5 simultaneous processes and a total of 7).
 
-    Requests: **50**; Max Simultaneous Requests: **70**
+    Requests: **70**; Max Simultaneous Requests: **50**
 
         ./conn.py -i http://example.com -t 10 -p 5 -r 7
     
