@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib import request
 
 
-VERSION = '1.6.2'
+VERSION = '1.6.3'
 VERBOSE = True
 
 
@@ -44,9 +44,9 @@ class ConnectionTest(object):
             self._urls = [url]
         else:
             with open(url) as f:
-                self._urls = f.read().splitlines()
-        self._original_urls = self._urls
+                self._original_urls = f.read().splitlines()
         self.set_cycle(skip)
+        self._original_urls = self._urls
 
     def url(self, skip=None):
         return next(self._urls_cycle)
