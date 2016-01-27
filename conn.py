@@ -27,24 +27,30 @@ class ConnectionTest(object):
     timeout = 100
     sleep = 0
     shuffle = False
+    base_offset = 0
 
-    def __init__(self, url=None, urlfile=None):
+    def __init__(self, url=None, urlfile=None, skip=0):
         if not urlfile:
             self._urls = [url]
         else:
             with open(url) as f:
                 self._urls = f.read().splitlines()
-        self._urls_cycle = itertools.cycle(self._urls)
+        self.set_cycle(skip)
 
     def url(self, skip=None):
         return next(self._urls_cycle)
 
-    def connect(self, offset):
+    def set_cycle(self, offset):
+        position = offset
+        position = position % len(self._urls)
+        self._urls = self._urls[position:] + self._urls[:position]
+        self._urls_cycle = itertools.cycle(self._urls)
+
+    def connect(self, pos_offset):
         if self.shuffle:
             random.shuffle(self._urls)
 
-        for _ in range(offset * self.base_offset):
-            self.url()  # skip first N urls
+        self.set_cycle(pos_offset * self.base_offset)
 
         def target():
             try:
@@ -81,16 +87,17 @@ def main():
     parser.add_argument('-i', dest='url', default=None, required=True, help='Input URL (or file) to test. See -f option.')
     parser.add_argument('-f', dest='urlfile', default=False, action='store_true', help='Treat input as a file containing one URL per line.')
     parser.add_argument('-p', dest='procs', default=1, type=int, help='Number of simultaneous processes to start.')
-    parser.add_argument('-t', dest='threads', default=1, type=int, help='Number of threads per process. Each thread open an URL.')
+    parser.add_argument('-t', dest='threads', default=ConnectionTest.threads, type=int, help='Number of threads per process. Each thread open an URL.')
     parser.add_argument('-r', dest='repeat', default=None, type=int, help='Total number of processes to open.')
     parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     parser.add_argument('--timeout', default=ConnectionTest.timeout, type=int, help='Timeout for HTTP(S) connection.')
     parser.add_argument('--sleep', default=ConnectionTest.sleep, type=float, help='Time to sleep prior to each request.')
-    parser.add_argument('--shuffle', default=False, action='store_true', help='Shuffle the list of URLs at the start of each process.')
-    parser.add_argument('--offset', default=0, type=int, help='Offset the input list by OFFSET*k elements on each repeatition.')
+    parser.add_argument('--shuffle', default=ConnectionTest.shuffle, action='store_true', help='Shuffle the list of URLs at the start of each process.')
+    parser.add_argument('--offset', default=ConnectionTest.base_offset, type=int, help='Offset the input list by OFFSET*k elements on each repeatition.')
+    parser.add_argument('--skip', default=0, type=int, help='Skip the first N elements on the list.')
     args = parser.parse_args()
 
-    ctest = ConnectionTest(args.url, args.urlfile)
+    ctest = ConnectionTest(args.url, args.urlfile, args.skip)
     ctest.threads = args.threads
     ctest.timeout = args.timeout
     ctest.shuffle = args.shuffle
