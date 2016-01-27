@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+    Load testing for HTTP and HTTPS.
+    Author: João Bernardo Oliveira <jboliveira@netfilter.com.br>
+    Netfilter
+"""
+
 import argparse
 import itertools
 import multiprocessing
@@ -15,8 +21,8 @@ VERSION = '1.5.7'
 class ConnectError(Exception):
     pass
 
-class ConnectionTest(object):
 
+class ConnectionTest(object):
     threads = 1
     timeout = 100
     sleep = 0
@@ -71,12 +77,13 @@ class ConnectionTest(object):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='HTTP and HTTPS load test')
-    parser.add_argument('-i', dest='url', default=None, help='Input URL (or file) to test. See -f option.')
+    parser = argparse.ArgumentParser(prog='Conn', description='HTTP and HTTPS load test')
+    parser.add_argument('-i', dest='url', default=None, required=True, help='Input URL (or file) to test. See -f option.')
     parser.add_argument('-f', dest='urlfile', default=False, action='store_true', help='Treat input as a file containing one URL per line.')
     parser.add_argument('-p', dest='procs', default=1, type=int, help='Number of simultaneous processes to start.')
     parser.add_argument('-t', dest='threads', default=1, type=int, help='Number of threads per process. Each thread open an URL.')
     parser.add_argument('-r', dest='repeat', default=None, type=int, help='Total number of processes to open.')
+    parser.add_argument('--version', action='version', version='%(prog)s ' + VERSION)
     parser.add_argument('--timeout', default=ConnectionTest.timeout, type=int, help='Timeout for HTTP(S) connection.')
     parser.add_argument('--sleep', default=ConnectionTest.sleep, type=float, help='Time to sleep prior to each request.')
     parser.add_argument('--shuffle', default=False, action='store_true', help='Shuffle the list of URLs at the start of each process.')
@@ -109,7 +116,7 @@ def main():
         Requests: {}
         Max Simultaneous Requests: {}
         Connection Errors: {}
-        '''.format(t, size/1024**2, size/1024**2*8/t, repeat * args.threads,
+    '''.format(t, size/1024**2, size/1024**2*8/t, repeat * args.threads,
                min(repeat, args.procs) * args.threads, errors)
     
     print('\n'.join(x.strip() for x in output.strip().splitlines()))
