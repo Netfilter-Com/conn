@@ -28,6 +28,7 @@ class ConnectionTest(object):
     sleep = 0
     shuffle = False
     base_offset = 0
+    dry_run = False
 
     def __init__(self, url=None, urlfile=None, skip=0):
         if not urlfile:
@@ -53,10 +54,14 @@ class ConnectionTest(object):
         self.set_cycle(pos_offset * self.base_offset)
 
         def target():
+            url = self.url()
             try:
-                url = self.url()
-                #print(url)
                 time.sleep(self.sleep)
+
+                if self.dry_run:
+                    print(url)
+                    return 0
+
                 ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
                 with request.urlopen(url, context=ssl_context, timeout=self.timeout) as conn:
                     return len(conn.read())
@@ -66,17 +71,17 @@ class ConnectionTest(object):
         with ThreadPoolExecutor(max_workers=self.threads) as executor:
             futures = [executor.submit(target) for _ in range(self.threads)]
             total = 0
-            errors = 0
+            errors = []
             
             for fut in as_completed(futures):
                 try:
                     total += fut.result()
                 except ConnectError as ce:
-                    #print(*ce.args)
-                    errors += 1
+                    print(*ce.args)
+                    errors.append(ce)
                 except Exception as e:
                     print(e)
-                    errors += 1
+                    errors.append(e)
                 finally:
                      pass
             return total, errors
@@ -95,6 +100,7 @@ def main():
     parser.add_argument('--shuffle', default=ConnectionTest.shuffle, action='store_true', help='Shuffle the list of URLs at the start of each process.')
     parser.add_argument('--offset', default=ConnectionTest.base_offset, type=int, help='Offset the input list by OFFSET*k elements on each repeatition.')
     parser.add_argument('--skip', default=0, type=int, help='Skip the first N elements on the list.')
+    parser.add_argument('--dry_run', default=False, action='store_true', help='Print URLs instead of opening them.')
     args = parser.parse_args()
 
     ctest = ConnectionTest(args.url, args.urlfile, args.skip)
@@ -103,6 +109,7 @@ def main():
     ctest.shuffle = args.shuffle
     ctest.sleep = args.sleep
     ctest.base_offset = args.offset
+    ctest.dry_run = args.dry_run
 
     repeat = args.repeat if args.repeat is not None else args.procs
 
@@ -113,7 +120,7 @@ def main():
 
     size, errors = zip(*data)
     size = sum(size)
-    errors = sum(errors)
+    errors = sum(errors, [])
 
     output = '''
         Time: {:.3f}s
@@ -124,7 +131,7 @@ def main():
         Max Simultaneous Requests: {}
         Connection Errors: {}
     '''.format(t, size/1024**2, size/1024**2*8/t, repeat * args.threads,
-               min(repeat, args.procs) * args.threads, errors)
+               min(repeat, args.procs) * args.threads, len(errors))
     
     print('\n'.join(x.strip() for x in output.strip().splitlines()))
 
