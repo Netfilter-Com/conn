@@ -16,7 +16,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib import request
 
-VERSION = '1.5.7'
+
+VERSION = '1.6.0'
+
 
 class ConnectError(Exception):
     pass
