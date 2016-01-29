@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib import request
 
 
-VERSION = '1.6.4'
+VERSION = '1.6.5'
 VERBOSE = True
 
 
@@ -93,7 +93,7 @@ class ConnectionTest(object):
                     errors.append(e)
                 finally:
                      pass
-            return total, errors
+            return total, len(errors)
 
 
 def main():
@@ -133,7 +133,7 @@ def main():
 
     size, errors = zip(*data)
     size = sum(size)
-    errors = sum(errors, [])
+    errors = sum(errors)
 
     output = '''
         Time: {:.3f}s
@@ -144,7 +144,7 @@ def main():
         Max Simultaneous Requests: {}
         Connection Errors: {}
     '''.format(t, size/1024**2, size/1024**2*8/t, repeat * args.threads,
-               min(repeat, args.procs) * args.threads, len(errors))
+               min(repeat, args.procs) * args.threads, errors)
     
     print('\n'.join(x.strip() for x in output.strip().splitlines()))
 
