@@ -1,4 +1,4 @@
-# Conn
+# Conn - Load test your router!
 Open several connections for HTTP/HTTPS load test. For the list of options, try `./conn.py --help`.
 
 ## Examples - Single URL
